@@ -10,6 +10,11 @@ import { logCall, startTimer } from './logger.js';
 const ADMIN_PORT = parseInt(process.env.ADMIN_PORT || '9502', 10);
 
 /**
+ * 管理平台密码
+ */
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+
+/**
  * 日志文件路径
  */
 const LOG_PATH = process.env.LOG_PATH || './data/calls.log';
@@ -40,6 +45,193 @@ function sendJson(res: http.ServerResponse, data: unknown, status = 200): void {
 function sendHtml(res: http.ServerResponse, html: string): void {
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
   res.end(html);
+}
+
+/**
+ * 获取登录页面 HTML
+ */
+function getLoginPageHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - My-Mem-MCP 数据管理平台</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .login-container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .login-header .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    .login-header h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .login-header p {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .error-msg {
+      background: rgba(255, 71, 87, 0.1);
+      color: #ff4757;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .error-msg.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="icon">🔐</div>
+      <h1>数据管理平台</h1>
+      <p>请输入密码以继续</p>
+    </div>
+    
+    <div id="errorMsg" class="error-msg"></div>
+    
+    <form onsubmit="login(event)">
+      <div class="form-group">
+        <label for="password">访问密码</label>
+        <input type="password" id="password" placeholder="请输入密码" required autofocus>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">登 录</button>
+    </form>
+  </div>
+  
+  <script>
+    // 检查是否已登录
+    if (sessionStorage.getItem('admin_auth') === 'true') {
+      window.location.href = '/setting/dashboard';
+    }
+    
+    async function login(event) {
+      event.preventDefault();
+      
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('loginBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      
+      btn.disabled = true;
+      btn.textContent = '验证中...';
+      errorMsg.classList.remove('show');
+      
+      try {
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        
+        const result = await res.json();
+        
+        if (result.success) {
+          sessionStorage.setItem('admin_auth', 'true');
+          window.location.href = '/setting/dashboard';
+        } else {
+          errorMsg.textContent = result.message || '密码错误';
+          errorMsg.classList.add('show');
+          btn.disabled = false;
+          btn.textContent = '登 录';
+        }
+      } catch (e) {
+        errorMsg.textContent = '验证失败，请重试';
+        errorMsg.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = '登 录';
+      }
+    }
+  </script>
+</body>
+</html>`;
 }
 
 /**
@@ -583,9 +775,14 @@ function getAdminPageHtml(): string {
           <h1>🧠 My-Mem-MCP 数据管理平台</h1>
           <p>管理记忆数据、查看调用日志、测试搜索功能</p>
         </div>
-        <div id="ollamaStatus" class="health-indicator">
-          <span class="health-dot"></span>
-          <span>检查中...</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="ollamaStatus" class="health-indicator">
+            <span class="health-dot"></span>
+            <span>检查中...</span>
+          </div>
+          <button onclick="logout()" class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">
+            🚪 退出登录
+          </button>
         </div>
       </div>
       <div class="stats-bar" id="statsBar">
@@ -690,6 +887,19 @@ function getAdminPageHtml(): string {
   <script>
     let allLogs = [];
     let currentFilter = 'all';
+    
+    // 检查登录状态
+    if (sessionStorage.getItem('admin_auth') !== 'true') {
+      window.location.href = '/setting';
+    }
+    
+    // 退出登录
+    function logout() {
+      if (confirm('确定要退出登录吗？')) {
+        sessionStorage.removeItem('admin_auth');
+        window.location.href = '/setting';
+      }
+    }
     
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
@@ -1096,9 +1306,28 @@ export function startAdminServer(): void {
     const url = new URL(req.url || '/', `http://localhost:${ADMIN_PORT}`);
 
     try {
-      // 管理页面
+      // 登录页面
       if (url.pathname === '/setting' || url.pathname === '/setting/') {
+        sendHtml(res, getLoginPageHtml());
+        return;
+      }
+
+      // 管理页面（需要登录）
+      if (url.pathname === '/setting/dashboard') {
         sendHtml(res, getAdminPageHtml());
+        return;
+      }
+
+      // 密码验证
+      if (url.pathname === '/api/auth' && req.method === 'POST') {
+        const body = await parseBody(req);
+        const { password } = JSON.parse(body);
+        
+        if (password === ADMIN_PASSWORD) {
+          sendJson(res, { success: true, message: '验证成功' });
+        } else {
+          sendJson(res, { success: false, message: '密码错误' }, 401);
+        }
         return;
       }
 

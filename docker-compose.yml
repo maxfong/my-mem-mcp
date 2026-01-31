@@ -29,6 +29,8 @@ services:
       # 管理平台端口
       - ADMIN_PORT=9502
       - ADMIN_ENABLED=true
+      # 管理平台访问密码
+      - ADMIN_PASSWORD=admin
     volumes:
       # 数据持久化：将容器内的 data 目录挂载到宿主机
       - ./data:/app/data

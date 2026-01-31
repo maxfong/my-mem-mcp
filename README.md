@@ -143,6 +143,7 @@ docker-compose up -d
 | `LOG_PATH` | `/app/data/calls.log` | 日志文件路径 |
 | `ADMIN_ENABLED` | `true` | 是否启用数据管理平台 |
 | `ADMIN_PORT` | `9502` | 数据管理平台端口 |
+| `ADMIN_PASSWORD` | `admin` | 数据管理平台访问密码 |
 
 ## 项目结构
 
@@ -201,6 +202,8 @@ my-mem-mcp/
 启动 SSE 模式后，可以通过 Web 界面管理记忆数据：
 
 **访问地址：** `http://localhost:9502/setting`
+
+**默认密码：** `admin`（可通过 `ADMIN_PASSWORD` 环境变量修改）
 
 ### 功能介绍
 
