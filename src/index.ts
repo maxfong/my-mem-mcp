@@ -13,6 +13,7 @@ import http from 'http';
 import { memoryStore } from './memory-store.js';
 import { checkOllamaHealth, getOllamaHost, getEmbeddingModel } from './ollama-client.js';
 import { logCall, startTimer } from './logger.js';
+import { startAdminServer } from './admin.js';
 import type { AddMemoryParams, SearchMemoryParams, DeleteMemoryParams } from './types.js';
 
 /**
@@ -541,10 +542,22 @@ async function startSSEServer() {
 }
 
 /**
+ * 是否启用管理平台
+ */
+function isAdminEnabled(): boolean {
+  return process.env.ADMIN_ENABLED !== 'false';
+}
+
+/**
  * 启动服务器
  */
 async function main() {
   const mode = getTransportMode();
+  
+  // 启动管理平台（SSE 模式下默认启动）
+  if (mode === 'sse' && isAdminEnabled()) {
+    startAdminServer();
+  }
   
   if (mode === 'sse') {
     await startSSEServer();

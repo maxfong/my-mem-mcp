@@ -21,6 +21,7 @@
 - 支持 STDIO 和 SSE 两种传输模式
 - JSON 文件持久化存储
 - 调用日志记录
+- 数据管理平台 - Web 界面管理记忆数据
 
 ## 快速开始
 
@@ -48,6 +49,7 @@ docker-compose up -d
 服务启动后：
 - SSE 端点: `http://localhost:9501/sse/{userId}`
 - 健康检查: `http://localhost:9501/health`
+- 数据管理平台: `http://localhost:9502/setting`
 
 ## MCP 配置
 
@@ -139,6 +141,8 @@ docker-compose up -d
 | `DEFAULT_USER_ID` | - | 默认用户 ID（可选） |
 | `LOG_ENABLED` | `true` | 是否启用日志 |
 | `LOG_PATH` | `/app/data/calls.log` | 日志文件路径 |
+| `ADMIN_ENABLED` | `true` | 是否启用数据管理平台 |
+| `ADMIN_PORT` | `9502` | 数据管理平台端口 |
 
 ## 项目结构
 
@@ -150,6 +154,7 @@ my-mem-mcp/
 │   ├── ollama-client.ts      # Ollama API 封装
 │   ├── vector-search.ts      # 向量搜索算法
 │   ├── logger.ts             # 日志工具
+│   ├── admin.ts              # 数据管理平台
 │   └── types.ts              # 类型定义
 ├── data/                     # 数据存储（自动创建）
 ├── Dockerfile
@@ -190,6 +195,39 @@ my-mem-mcp/
 |------|------|------|------|
 | `userId` | string | 否* | 用户 ID |
 | `id` | string | 是 | 记忆 ID |
+
+## 数据管理平台
+
+启动 SSE 模式后，可以通过 Web 界面管理记忆数据：
+
+**访问地址：** `http://localhost:9502/setting`
+
+### 功能介绍
+
+1. **用户数据管理**
+   - 顶部选择框切换不同用户
+   - 查看用户的所有记忆数据（问题和答案）
+   - 删除指定记忆，自动更新 JSON 文件
+
+2. **添加记忆**
+   - 填写问题（Query）和答案（Answer）
+   - 程序自动调用 Ollama 生成向量嵌入
+   - 支持实时查看添加状态
+
+3. **搜索测试**
+   - 输入内容进行语义搜索测试
+   - 显示相似度分数
+   - 验证向量搜索效果
+
+4. **调用日志**
+   - 实时显示 `calls.log` 内容
+   - 按类型筛选：添加（绿色）、搜索（蓝色）、删除（红色）
+   - 显示请求参数和执行耗时
+
+5. **系统状态**
+   - Ollama 服务在线状态检测
+   - 用户数量和记忆总数统计
+   - 当前使用的嵌入模型
 
 ## 本地开发
 
