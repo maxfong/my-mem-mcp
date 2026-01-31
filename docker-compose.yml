@@ -1,0 +1,34 @@
+services:
+  my-mem-mcp:
+    build: .
+    container_name: my-mem-mcp
+    # MCP STDIO 模式需要保持标准输入开启
+    stdin_open: true
+    tty: true
+    # SSE 模式端口映射
+    ports:
+      - "9501:9501"
+    environment:
+      # Mac 环境通过 host.docker.internal 访问宿主机 Ollama
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      # 使用 BGE-M3 模型生成向量
+      - EMBEDDING_MODEL=bge-m3
+      # 数据存储目录（每个用户一个 JSON 文件: {userId}.json）
+      - DATA_DIR=/app/data
+      # 日志配置
+      - LOG_PATH=/app/data/calls.log
+      - LOG_ENABLED=true
+      # 默认用户ID（可选，设置后接口的 userId 参数可省略）
+      - DEFAULT_USER_ID=unknown
+      # 传输模式: stdio (默认) 或 sse
+      # 在 Docker 容器间通信时使用 sse 模式
+      - TRANSPORT_MODE=sse
+      # SSE 服务端口
+      - SSE_PORT=9501
+    volumes:
+      # 数据持久化：将容器内的 data 目录挂载到宿主机
+      - ./data:/app/data
+    restart: unless-stopped
+    # Linux 环境需要添加以下配置以访问宿主机
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
